@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tab_payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tab_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tab_id')->constrained()->onDelete('restrict');
             $table->string('payer_name')->nullable();
             $table->decimal('payment_value', 10, 2);
             $table->string('payment_method');

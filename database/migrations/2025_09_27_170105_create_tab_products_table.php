@@ -11,8 +11,8 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('tab_products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('tab_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained()->onDelete('restrict');
+            $table->foreignId('tab_id')->constrained()->onDelete('restrict');
             $table->integer('quantity')->default(1);
             $table->timestamps();
             $table->softDeletes();

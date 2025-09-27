@@ -6,6 +6,7 @@ use App\Http\Resources\TabResource;
 use App\Models\Tab;
 use App\Models\Product;
 use App\Models\ProductTab;
+use App\Models\TabProduct;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -86,8 +87,8 @@ class TabController extends BaseController {
         $product = Product::findOrFail($request->product_id);
         $quantity = $request->quantity ?? 1;
 
-        // Always create a new ProductTab entry (no unique constraint)
-        ProductTab::create([
+        // Always create a new TabProduct entry (no unique constraint)
+        TabProduct::create([
             'product_id' => $product->id,
             'tab_id' => $tab->id,
             'quantity' => $quantity

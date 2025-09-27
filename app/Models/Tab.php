@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tab extends Model {
+
     protected $fillable = [
         'client_name',
         'total_items',
@@ -20,26 +21,10 @@ class Tab extends Model {
     ];
 
     /**
-     * The products that belong to the tab.
-     */
-    public function products(): BelongsToMany {
-        return $this->belongsToMany(Product::class, 'product_tab')
-            ->withPivot('quantity', 'deleted_at')
-            ->withTimestamps();
-    }
-
-    /**
-     * Get all product tab relationships (including soft deleted)
-     */
-    public function productTabs(): HasMany {
-        return $this->hasMany(ProductTab::class);
-    }
-
-    /**
      * Get active product tab relationships (excluding soft deleted)
      */
     public function activeProductTabs(): HasMany {
-        return $this->hasMany(ProductTab::class)->whereNull('deleted_at');
+        return $this->hasMany(TabProduct::class)->whereNull('deleted_at');
     }
 
     /**

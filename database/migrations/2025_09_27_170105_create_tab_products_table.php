@@ -9,7 +9,7 @@ return new class extends Migration {
      * Run the migrations.
      */
     public function up(): void {
-        Schema::create('product_tab', function (Blueprint $table) {
+        Schema::create('tab_products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->foreignId('tab_id')->constrained()->onDelete('cascade');
@@ -23,6 +23,6 @@ return new class extends Migration {
      * Reverse the migrations.
      */
     public function down(): void {
-        Schema::dropIfExists('product_tab');
+        Schema::dropIfExists('tab_products');
     }
 };

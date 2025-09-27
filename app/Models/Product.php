@@ -17,6 +17,6 @@ class Product extends Model {
      * The tabs that belong to the product.
      */
     public function tabs(): BelongsToMany {
-        return $this->belongsToMany(Tab::class, 'product_tab');
+        return $this->belongsToMany(Tab::class, 'tab_products');
     }
 }

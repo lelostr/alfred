@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Tab extends Model {
 
@@ -27,8 +27,21 @@ class Tab extends Model {
         return $this->hasMany(TabProduct::class)->whereNull('deleted_at');
     }
 
-    public function products(): HasManyThrough {
-        return $this->hasManyThrough(Product::class, TabProduct::class, secondKey: 'id', secondLocalKey: 'product_id');
+    /**
+     * The products that belong to the tab with pivot data.
+     */
+    public function products(): BelongsToMany {
+        return $this->belongsToMany(Product::class, 'tab_products')
+            ->withPivot('quantity', 'deleted_at')
+            ->withTimestamps()
+            ->whereNull('tab_products.deleted_at');
+    }
+
+    /**
+     * Get all product tab relationships (including soft deleted)
+     */
+    public function tabProducts(): HasMany {
+        return $this->hasMany(TabProduct::class);
     }
 
     /**

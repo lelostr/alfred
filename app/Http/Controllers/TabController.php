@@ -75,7 +75,7 @@ class TabController extends BaseController {
     public function addProduct(Request $request, string $id): JsonResponse {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'integer|min:1|default:1',
+            'quantity' => 'integer|min:1',
         ]);
 
         $tab = Tab::findOrFail($id);

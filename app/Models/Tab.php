@@ -45,6 +45,13 @@ class Tab extends Model {
     }
 
     /**
+     * Get active payments for the tab (excluding soft deleted)
+     */
+    public function payments(): HasMany {
+        return $this->hasMany(TabPayment::class)->whereNull('deleted_at');
+    }
+
+    /**
      * Check if tab is closed
      */
     public function isClosed(): bool {
@@ -78,5 +85,33 @@ class Tab extends Model {
             'total_items' => $totalItems,
             'total_value' => $totalValue
         ]);
+    }
+
+    /**
+     * Get total amount paid
+     */
+    public function getTotalPaid(): float {
+        return $this->payments()->sum('payment_value');
+    }
+
+    /**
+     * Get remaining amount to pay
+     */
+    public function getRemainingAmount(): float {
+        return $this->total_value - $this->getTotalPaid();
+    }
+
+    /**
+     * Check if tab is fully paid
+     */
+    public function isFullyPaid(): bool {
+        return $this->getRemainingAmount() <= 0;
+    }
+
+    /**
+     * Check if tab is overpaid
+     */
+    public function isOverpaid(): bool {
+        return $this->getTotalPaid() > $this->total_value;
     }
 }

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Resources\TabResource;
 use App\Models\Tab;
 use App\Models\Product;
-use App\Models\ProductTab;
 use App\Models\TabProduct;
+use App\Models\TabPayment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -178,5 +178,70 @@ class TabController extends BaseController {
         $tab->load('products');
 
         return $this->successResponse('Comanda fechada com sucesso', new TabResource($tab));
+    }
+
+    /**
+     * Add a payment to the tab
+     */
+    public function addPayment(Request $request, string $id): JsonResponse {
+        $request->validate([
+            'payer_name' => 'nullable|string|max:255',
+            'payment_value' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string|max:255',
+        ]);
+
+        $tab = Tab::findOrFail($id);
+
+        if ($tab->isClosed()) {
+            return $this->errorResponse('Não é possível adicionar pagamentos a uma comanda fechada', []);
+        }
+
+        // Check if payment would exceed the remaining amount
+        $remainingAmount = $tab->getRemainingAmount();
+        if ($request->payment_value > $remainingAmount) {
+            return $this->errorResponse('Valor do pagamento excede o valor restante da comanda', [
+                'remaining_amount' => $remainingAmount,
+                'payment_value' => $request->payment_value
+            ]);
+        }
+
+        $payment = TabPayment::create([
+            'tab_id' => $tab->id,
+            'payer_name' => $request->payer_name,
+            'payment_value' => $request->payment_value,
+            'payment_method' => $request->payment_method,
+        ]);
+
+        $tab->load('products', 'payments');
+
+        return $this->successResponse('Pagamento adicionado com sucesso', new TabResource($tab));
+    }
+
+    /**
+     * Remove a payment from the tab
+     */
+    public function removePayment(Request $request, string $id): JsonResponse {
+        $request->validate([
+            'payment_id' => 'required|exists:tab_payments,id',
+        ]);
+
+        $tab = Tab::findOrFail($id);
+
+        if ($tab->isClosed()) {
+            return $this->errorResponse('Não é possível remover pagamentos de uma comanda fechada', []);
+        }
+
+        $payment = TabPayment::where('tab_id', $tab->id)
+            ->where('id', $request->payment_id)
+            ->first();
+
+        if (!$payment) {
+            return $this->errorResponse('Pagamento não encontrado nesta comanda', []);
+        }
+
+        $payment->delete(); // Soft delete
+        $tab->load('products', 'payments');
+
+        return $this->successResponse('Pagamento removido com sucesso', new TabResource($tab));
     }
 }

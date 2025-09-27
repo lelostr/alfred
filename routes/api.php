@@ -22,6 +22,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tabs/{tab}/add-product', [TabController::class, 'addProduct']);
     Route::post('/tabs/{tab}/remove-product', [TabController::class, 'removeProduct']);
     Route::post('/tabs/{tab}/close', [TabController::class, 'close']);
+    
+    // Rotas específicas para gerenciar pagamentos das comandas
+    Route::post('/tabs/{tab}/add-payment', [TabController::class, 'addPayment']);
+    Route::post('/tabs/{tab}/remove-payment', [TabController::class, 'removePayment']);
 
     Route::get('/me', function (Request $request) {
         return $request->user();

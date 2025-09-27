@@ -1,0 +1,181 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Resources\TabResource;
+use App\Models\Tab;
+use App\Models\Product;
+use App\Models\ProductTab;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
+class TabController extends BaseController {
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): JsonResponse {
+        $tabs = Tab::with('products')->get();
+        return $this->successResponse('Comandas listadas com sucesso', TabResource::collection($tabs));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request): JsonResponse {
+        $request->validate([
+            'client_name' => 'required|string|max:255',
+        ]);
+
+        $tab = Tab::create([
+            'client_name' => $request->client_name,
+            'total_items' => 0,
+            'total_value' => 0.00,
+        ]);
+
+        return $this->successResponse('Comanda criada com sucesso', new TabResource($tab));
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id): JsonResponse {
+        $tab = Tab::with('products')->findOrFail($id);
+        return $this->successResponse('Comanda encontrada com sucesso', new TabResource($tab));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id): JsonResponse {
+        $request->validate([
+            'client_name' => 'sometimes|string|max:255',
+        ]);
+
+        $tab = Tab::findOrFail($id);
+        $tab->update($request->only(['client_name']));
+
+        return $this->successResponse('Comanda atualizada com sucesso', new TabResource($tab));
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id): JsonResponse {
+        $tab = Tab::findOrFail($id);
+        $tab->delete();
+
+        return $this->successResponse('Comanda deletada com sucesso');
+    }
+
+    /**
+     * Add a product to the tab
+     */
+    public function addProduct(Request $request, string $id): JsonResponse {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'integer|min:1|default:1',
+        ]);
+
+        $tab = Tab::findOrFail($id);
+
+        if ($tab->isClosed()) {
+            return $this->errorResponse('Não é possível adicionar produtos a uma comanda fechada', []);
+        }
+
+        $product = Product::findOrFail($request->product_id);
+        $quantity = $request->quantity ?? 1;
+
+        // Always create a new ProductTab entry (no unique constraint)
+        ProductTab::create([
+            'product_id' => $product->id,
+            'tab_id' => $tab->id,
+            'quantity' => $quantity
+        ]);
+
+        // Recalculate totals
+        $tab->recalculateTotals();
+        $tab->load('products');
+
+        return $this->successResponse('Produto adicionado com sucesso', new TabResource($tab));
+    }
+
+    /**
+     * Remove a product from the tab
+     */
+    public function removeProduct(Request $request, string $id): JsonResponse {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'integer|min:1',
+            'remove_all' => 'boolean'
+        ]);
+
+        $tab = Tab::findOrFail($id);
+
+        if ($tab->isClosed()) {
+            return $this->errorResponse('Não é possível remover produtos de uma comanda fechada', []);
+        }
+
+        $product = Product::findOrFail($request->product_id);
+        $quantityToRemove = $request->quantity ?? 1;
+        $removeAll = $request->boolean('remove_all', false);
+
+        // Get active product tabs for this product
+        $activeProductTabs = $tab->activeProductTabs()
+            ->where('product_id', $product->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        if ($activeProductTabs->isEmpty()) {
+            return $this->errorResponse('Produto não encontrado na comanda', []);
+        }
+
+        if ($removeAll) {
+            // Soft delete all instances of this product
+            foreach ($activeProductTabs as $productTab) {
+                $productTab->delete();
+            }
+        } else {
+            // Remove specific quantity (FIFO - First In, First Out)
+            $remainingToRemove = $quantityToRemove;
+
+            foreach ($activeProductTabs as $productTab) {
+                if ($remainingToRemove <= 0) break;
+
+                $currentQuantity = $productTab->quantity;
+
+                if ($remainingToRemove >= $currentQuantity) {
+                    // Remove this entire entry
+                    $productTab->delete();
+                    $remainingToRemove -= $currentQuantity;
+                } else {
+                    // Reduce quantity in this entry
+                    $productTab->update(['quantity' => $currentQuantity - $remainingToRemove]);
+                    $remainingToRemove = 0;
+                }
+            }
+        }
+
+        // Recalculate totals
+        $tab->recalculateTotals();
+        $tab->load('products');
+
+        return $this->successResponse('Produto removido com sucesso', new TabResource($tab));
+    }
+
+    /**
+     * Close the tab
+     */
+    public function close(string $id): JsonResponse {
+        $tab = Tab::findOrFail($id);
+
+        if ($tab->isClosed()) {
+            return $this->errorResponse('Comanda já está fechada', []);
+        }
+
+        $tab->close();
+        $tab->load('products');
+
+        return $this->successResponse('Comanda fechada com sucesso', new TabResource($tab));
+    }
+}

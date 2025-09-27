@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\TabController;
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -15,6 +16,12 @@ Route::group(['prefix' => 'auth'], function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('/products', ProductController::class);
+    Route::apiResource('/tabs', TabController::class);
+
+    // Rotas específicas para gerenciar produtos nas comandas
+    Route::post('/tabs/{tab}/add-product', [TabController::class, 'addProduct']);
+    Route::post('/tabs/{tab}/remove-product', [TabController::class, 'removeProduct']);
+    Route::post('/tabs/{tab}/close', [TabController::class, 'close']);
 
     Route::get('/me', function (Request $request) {
         return $request->user();

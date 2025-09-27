@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 Route::group(['prefix' => 'auth'], function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 });
 
 /* Rotas protegidas por Sanctum */

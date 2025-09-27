@@ -35,6 +35,7 @@ class AuthController extends BaseController {
         if (Auth::attempt($credentials)) {
             /** @var User $user */
             $user = Auth::user();
+            $user->tokens()->delete();
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return $this->successResponse('Login realizado com sucesso', [
@@ -44,5 +45,18 @@ class AuthController extends BaseController {
         }
 
         return $this->errorResponse('Credenciais inválidas', []);
+    }
+
+    public function logout(Request $request) {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return $this->errorResponse('Usuário não encontrado', []);
+        }
+
+        $user->tokens()->delete();
+
+        return $this->successResponse('Logout realizado com sucesso');
     }
 }

@@ -16,7 +16,7 @@ class TabController extends BaseController {
      * Display a listing of the resource.
      */
     public function index(): JsonResponse {
-        $tabs = Tab::with('products')->get();
+        $tabs = Tab::with(['products', 'payments'])->get();
         return $this->successResponse('Comandas listadas com sucesso', TabResource::collection($tabs));
     }
 
@@ -41,7 +41,7 @@ class TabController extends BaseController {
      * Display the specified resource.
      */
     public function show(string $id): JsonResponse {
-        $tab = Tab::with('products')->findOrFail($id);
+        $tab = Tab::with(['products', 'payments'])->findOrFail($id);
         return $this->successResponse('Comanda encontrada com sucesso', new TabResource($tab));
     }
 

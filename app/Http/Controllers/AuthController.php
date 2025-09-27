@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends BaseController {
 
@@ -13,9 +14,13 @@ class AuthController extends BaseController {
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'required',
+            'password_confirmation' => 'required|same:password',
         ]);
 
-        $user = User::create($request->all());
+        $userData = $request->all();
+        $userData['password'] = Hash::make($userData['password']);
+        $user = User::create($userData);
+
         return $this->successResponse('Usuário registrado com sucesso', $user);
     }
 
@@ -28,9 +33,16 @@ class AuthController extends BaseController {
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            return $this->successResponse('Login realizado com sucesso');
+            /** @var User $user */
+            $user = Auth::user();
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return $this->successResponse('Login realizado com sucesso', [
+                'token' => $token,
+                'user' => $user,
+            ]);
         }
 
-        return $this->errorResponse('Credenciais inválidas', [], 401);
+        return $this->errorResponse('Credenciais inválidas', []);
     }
 }

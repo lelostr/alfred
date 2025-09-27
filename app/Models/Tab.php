@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Tab extends Model {
 
@@ -25,6 +25,10 @@ class Tab extends Model {
      */
     public function activeProductTabs(): HasMany {
         return $this->hasMany(TabProduct::class)->whereNull('deleted_at');
+    }
+
+    public function products(): HasManyThrough {
+        return $this->hasManyThrough(Product::class, TabProduct::class, secondKey: 'id', secondLocalKey: 'product_id');
     }
 
     /**

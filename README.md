@@ -1,8 +1,8 @@
-Passo a passo executado
+Passo a passo simples para criação
 
-> Necessário rodar `php artisan optimize a cada atualizaca!
+> Necessário rodar `php artisan optimize a cada atualização!
 
-## 01 - Instalar API
+## 01 - Instalando API
 
 `php artisan install:api`
 
@@ -17,7 +17,7 @@ Isto vai instalar:
 - `php artisan make:controller BaseController`
 - `php artisan make:controller AuthController`
 
-## 03 - Criar entidade produto
+## 03 - Criando entidade produto
 
 - `php artisan make:model Product -m`
 - `php artisan make:resource Product`
